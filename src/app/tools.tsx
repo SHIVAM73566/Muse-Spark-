@@ -302,7 +302,7 @@ export default function ToolsConnectionsScreen() {
         }
       }
     } catch (err: any) {
-      console.error('[tools.tsx] Connect error:', err);
+      logToolConnectionError('Connect', targetTool, err);
       showToast(getToolConnectionErrorMessage(err, targetTool.name));
       // Fallback status check
       await checkSingleToolStatus(targetTool.id, true);
@@ -346,7 +346,7 @@ export default function ToolsConnectionsScreen() {
         throw new Error(res.message || 'Failed to disconnect tool');
       }
     } catch (err: any) {
-      console.error('[tools.tsx] Disconnect error:', err);
+      logToolConnectionError('Disconnect', targetTool, err);
       showToast(getToolConnectionErrorMessage(err, targetTool.name));
     } finally {
       setLoadingToolIds((prev) => ({ ...prev, [targetTool.id]: false }));
@@ -519,6 +519,23 @@ function getToolConnectionErrorMessage(error: unknown, toolName: string): string
     return `${toolName} is missing its Composio authentication configuration. Ask the app administrator to configure it.`;
   }
   return `Could not ${message.toLowerCase().includes('disconnect') ? 'disconnect from' : 'connect to'} ${toolName}. Check the server configuration and try again.`;
+}
+
+function logToolConnectionError(
+  action: 'Connect' | 'Disconnect',
+  tool: ToolWithConnection,
+  error: unknown
+): void {
+  const details =
+    typeof error === 'object' && error !== null
+      ? error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown }
+      : {};
+  console.error(`[tools.tsx] ${action} error for ${tool.slug}:`, {
+    message: details.message ?? (error instanceof Error ? error.message : String(error)),
+    details: details.details,
+    hint: details.hint,
+    code: details.code,
+  });
 }
 
 const styles = StyleSheet.create({
