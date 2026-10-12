@@ -303,7 +303,7 @@ export default function ToolsConnectionsScreen() {
       }
     } catch (err: any) {
       logToolConnectionError('Connect', targetTool, err);
-      showToast(getToolConnectionErrorMessage(err, targetTool.name));
+      showToast(getToolConnectionErrorMessage(err, targetTool.name, 'connect'));
       // Fallback status check
       await checkSingleToolStatus(targetTool.id, true);
     } finally {
@@ -347,7 +347,7 @@ export default function ToolsConnectionsScreen() {
       }
     } catch (err: any) {
       logToolConnectionError('Disconnect', targetTool, err);
-      showToast(getToolConnectionErrorMessage(err, targetTool.name));
+      showToast(getToolConnectionErrorMessage(err, targetTool.name, 'disconnect'));
     } finally {
       setLoadingToolIds((prev) => ({ ...prev, [targetTool.id]: false }));
     }
@@ -507,13 +507,19 @@ export default function ToolsConnectionsScreen() {
   );
 }
 
-function getToolConnectionErrorMessage(error: unknown, toolName: string): string {
+function getToolConnectionErrorMessage(
+  error: unknown,
+  toolName: string,
+  action: 'connect' | 'disconnect'
+): string {
   const message = error instanceof Error ? error.message : '';
   if (/sign in/i.test(message)) {
     return 'Sign in with Google before connecting or managing tools.';
   }
   if (/COMPOSIO_API_KEY|not configured on this server/i.test(message)) {
-    return 'Tool connections are not configured on this server. Add COMPOSIO_API_KEY to the server .env file and restart Expo.';
+    return action === 'connect'
+      ? 'Connection unavailable. Demo mode active. No account was connected.'
+      : 'Tool management is unavailable until server setup is complete.';
   }
   if (/auth config|toolkit configuration/i.test(message)) {
     return `${toolName} is missing its Composio authentication configuration. Ask the app administrator to configure it.`;
